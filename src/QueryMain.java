@@ -78,7 +78,7 @@ public class QueryMain {
          **/
 
 
-        if (numJoin != 0) {
+        if (numJoin != 0 || sqlquery.isDistinct()) {
             System.out.println("enter the number of buffers available");
 
             try {
@@ -100,7 +100,7 @@ public class QueryMain {
         }
 
 
-/** This part is used When some random initial plan is required instead of comple optimized plan **/
+/** This part is used When some random initial plan is required instead of complete optimized plan **/
 /**
 
  RandomInitialPlan rip = new RandomInitialPlan(sqlquery);
@@ -117,7 +117,7 @@ public class QueryMain {
          execution plan
          **/
 
-        RandomOptimizer ro = new RandomOptimizer(sqlquery);
+        DynamicProgrammingOptimizer ro = new DynamicProgrammingOptimizer(sqlquery);
         Operator logicalroot = ro.getOptimizedPlan();
         if (logicalroot == null) {
             System.out.println("root is null");
@@ -127,7 +127,7 @@ public class QueryMain {
 
         /** preparing the execution plan **/
 
-        Operator root = RandomOptimizer.makeExecPlan(logicalroot);
+        Operator root = RandomOptimizer.makeExecPlan(logicalroot, sqlquery.isDistinct());
 
 /** Print final Plan **/
         System.out.println("----------------------Execution Plan----------------");
@@ -172,11 +172,14 @@ public class QueryMain {
         printSchema(schema);
         Batch resultbatch;
 
-
         /** print each tuple in the result **/
 
 
-        while ((resultbatch = root.next()) != null) {
+        /**
+         * BUG REPORT:
+         * resultbatch may be null, then the old implementation will throw unexpected exception
+         */
+        while ((resultbatch = root.next()) != null && resultbatch.size() != 0) {
             for (int i = 0; i < resultbatch.size(); i++) {
                 printTuple(resultbatch.elementAt(i));
             }

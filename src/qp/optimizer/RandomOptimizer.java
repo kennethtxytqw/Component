@@ -399,6 +399,15 @@ public class RandomOptimizer {
         }
     }
 
+    public static Operator makeExecPlan(Operator node, boolean isDistinct) {
+        if (isDistinct) {
+            return new Distinct(makeExecPlan(node));
+        }
+        else return makeExecPlan(node);
+    }
+
+
+
 
     /**
      * AFter finding a choice of method for each operator
@@ -426,15 +435,18 @@ public class RandomOptimizer {
                  replace with hasjoin, if implemented **/
 
                 case JoinType.BLOCKNESTED:
-
-                    NestedJoin bj = new NestedJoin((Join) node);
+                    BLOCKNESTED bj = new BLOCKNESTED((Join) node);
+                    bj.setLeft(left);
+                    bj.setRight(right);
+                    bj.setNumBuff(numbuff);
                 /* + other code */
                     return bj;
 
                 case JoinType.SORTMERGE:
-
-                    NestedJoin sm = new NestedJoin((Join) node);
-                /* + other code */
+                    SortMergeJoin sm = new SortMergeJoin((Join) node);
+                    sm.setLeft(left);
+                    sm.setRight(right);
+                    sm.setNumBuff(numbuff);
                     return sm;
 
                 case JoinType.HASHJOIN:
